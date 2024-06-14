@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Report</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Rubik', sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        .menu-icon {
+            font-size: 30px;
+            cursor: pointer;
+            padding: 10px;
+            background-color: #111;
+            color: #FFF;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            background-color: #111;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            z-index: 1;
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #FDFDFD;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            background-color: #575757;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 25px;
+            font-size: 30px;
+            color: #FFF;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 900px;
+            margin: 50px auto;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 24px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        @media (max-width: 600px) {
+            .menu-icon {
+                font-size: 24px;
+            }
+
+            .sidebar a {
+                font-size: 20px;
+            }
+
+            .close-btn {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="menu-icon" onclick="openNav()">&#9776;</div>
+    <div id="sidebar" class="sidebar">
+        <a href="javascript:void(0)" class="close-btn" onclick="closeNav()">&times;</a>
+        <a href="land.html">Homepage</a>
+       
+        <a href="#" id="logoutBtn">Logout</a>
+    </div>
+    <div class="container">
+        <h1>Daily Report</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Task Name</th>
+                    <th>Completed Time</th>
+                    <th>Completed By</th>
+                </tr>
+            </thead>
+            <tbody id="report-table-body">
+                <!-- Report rows will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function openNav() {
+            document.getElementById("sidebar").style.width = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("sidebar").style.width = "0";
+        }
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAn2hwFs7g1StFNAGVbiOxTTcLbuNq1le0",
+            authDomain: "propclean.firebaseapp.com",
+            databaseURL: "https://propclean-default-rtdb.firebaseio.com",
+            projectId: "propclean",
+            storageBucket: "propclean.appspot.com",
+            messagingSenderId: "795234019311",
+            appId: "1:795234019311:web:369566b90b91139164781a",
+            measurementId: "G-CE3LFP4HSJ"
+        };
+
+        // Initialize Firebase
+        const scriptApp = document.createElement('script');
+        scriptApp.src = "https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js";
+        document.head.appendChild(scriptApp);
+
+        const scriptDatabase = document.createElement('script');
+        scriptDatabase.src = "https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js";
+        document.head.appendChild(scriptDatabase);
+
+        const scriptAuth = document.createElement('script');
+        scriptAuth.src = "https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js";
+        document.head.appendChild(scriptAuth);
+
+        scriptAuth.onload = function() {
+            firebase.initializeApp(firebaseConfig);
+
+            const database = firebase.database();
+            const tasksRef = database.ref('Daily Tasks');
+
+            function fetchReportData() {
+                const reportTableBody = document.getElementById('report-table-body');
+
+                tasksRef.once('value', snapshot => {
+                    if (snapshot.exists()) {
+                        const tasks = snapshot.val();
+                        let reportHTML = '';
+                        for (const taskId in tasks) {
+                            const task = tasks[taskId];
+                            if (task.status === 'Complete') {
+                                reportHTML += `
+                                    <tr>
+                                        <td>${task.task}</td>
+                                        <td>${new Date(task.uploadTime).toLocaleString()}</td>
+                                        <td>${task.completedBy}</td>
+                                    </tr>
+                                `;
+                            }
+                        }
+                        reportTableBody.innerHTML = reportHTML;
+                    } else {
+                        reportTableBody.innerHTML = '<tr><td colspan="3">No tasks found</td></tr>';
+                    }
+                }).catch(error => {
+                    console.error('Error fetching report data:', error);
+                });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                fetchReportData();
+            });
+
+            document.getElementById("logoutBtn").addEventListener("click", function() {
+                firebase.auth().signOut().then(() => {
+                    window.location.href = "index.html"; // Redirect to login page
+                }).catch((error) => {
+                    console.error("Error signing out:", error);
+                });
+            });
+        };
+    </script>
+</body>
+</html>
